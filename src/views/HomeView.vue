@@ -1,4 +1,3 @@
-<!-- App.vue -->
 <template>
   <div class="app-container">
     <Sidebar @add-record="openDialog" />
@@ -11,6 +10,12 @@
       @close="closeDialog"
       @submit="submitRecord"
     />
+    <div v-if="showWarning" class="warning-overlay">
+      <div class="warning-box">
+        <p>{{ warningMessage }}</p>
+        <button @click="closeWarning">确定</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -24,6 +29,8 @@ const records = ref([])
 const showDialog = ref(false)
 const currentSubmenu = ref('')
 const editingRecord = ref(null)
+const showWarning = ref(false)
+const warningMessage = ref('')
 
 const dialogFields = computed(() => {
   if (currentSubmenu.value === '打开网页') {
@@ -43,11 +50,13 @@ const dialogFields = computed(() => {
 
 const openDialog = (type) => {
   if (type === '打开网页' && records.value.length > 0) {
-    alert('只能添加一条打开网页记录，且必须是第一条。')
+    showWarning.value = true
+    warningMessage.value = '只能添加一条打开网页记录，且必须是第一条。'
     return
   }
   if (type === '点击元素(web)' && records.value.length === 0) {
-    alert('必须先添加一条打开网页记录。')
+    showWarning.value = true
+    warningMessage.value = '必须先添加一条打开网页记录。'
     return
   }
   currentSubmenu.value = type
@@ -84,9 +93,8 @@ const submitRecord = (info) => {
 const deleteRecord = (id) => {
   const index = records.value.findIndex(record => record.id === id)
   if (index === 0) {
-    if (confirm('删除打开网页记录将清空所有记录，是否继续？')) {
-      records.value = []
-    }
+    showWarning.value = true
+    warningMessage.value = '删除打开网页记录将清空所有记录，是否继续？'
   } else {
     records.value.splice(index, 1)
   }
@@ -97,6 +105,12 @@ const editRecord = (record) => {
   currentSubmenu.value = record.type
   showDialog.value = true
 }
+
+const closeWarning = () => {
+  showWarning.value = false
+  warningMessage.value = ''
+  records.value = []
+}
 </script>
 
 <style scoped>
@@ -104,4 +118,35 @@ const editRecord = (record) => {
   display: flex;
   height: 100vh;
 }
+
+.warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.warning-box {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.warning-box button {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
 </style>
