@@ -93,8 +93,7 @@ const submitRecord = (info) => {
 const deleteRecord = (id) => {
   const index = records.value.findIndex(record => record.id === id)
   if (index === 0) {
-    showWarning.value = true
-    warningMessage.value = '删除打开网页记录将清空所有记录，是否继续？'
+    records.value = []
   } else {
     records.value.splice(index, 1)
   }
@@ -109,7 +108,6 @@ const editRecord = (record) => {
 const closeWarning = () => {
   showWarning.value = false
   warningMessage.value = ''
-  records.value = []
 }
 </script>
 
