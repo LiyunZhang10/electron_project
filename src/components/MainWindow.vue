@@ -1,3 +1,4 @@
+<!-- MainWindow.vue -->
 <template>
   <div class="main-window">
     <TransitionGroup name="list" tag="div" class="record-list">
@@ -23,9 +24,12 @@
 </template>
 
 <script setup>
+import { defineProps, defineEmits } from 'vue'
+
 defineProps({
   records: Array
 })
+
 defineEmits(['delete-record', 'edit-record'])
 </script>
 

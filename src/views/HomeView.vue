@@ -1,3 +1,4 @@
+<!-- App.vue -->
 <template>
   <div class="app-container">
     <Sidebar @add-record="openDialog" />
@@ -41,6 +42,14 @@ const dialogFields = computed(() => {
 })
 
 const openDialog = (type) => {
+  if (type === '打开网页' && records.value.length > 0) {
+    alert('只能添加一条打开网页记录，且必须是第一条。')
+    return
+  }
+  if (type === '点击元素(web)' && records.value.length === 0) {
+    alert('必须先添加一条打开网页记录。')
+    return
+  }
   currentSubmenu.value = type
   editingRecord.value = null
   showDialog.value = true
@@ -55,24 +64,36 @@ const submitRecord = (info) => {
   if (editingRecord.value) {
     const index = records.value.findIndex(record => record.id === editingRecord.value.id)
     if (index !== -1) {
-      records.value[index] = { ...records.value[index], ...info }
+      records.value[index] = { ...editingRecord.value, ...info }
     }
   } else {
-    records.value.push({
+    const newRecord = {
       id: Date.now(),
       type: currentSubmenu.value,
       ...info
-    })
+    }
+    if (newRecord.type === '打开网页') {
+      records.value.unshift(newRecord)
+    } else {
+      records.value.push(newRecord)
+    }
   }
   closeDialog()
 }
 
 const deleteRecord = (id) => {
-  records.value = records.value.filter(record => record.id !== id)
+  const index = records.value.findIndex(record => record.id === id)
+  if (index === 0) {
+    if (confirm('删除打开网页记录将清空所有记录，是否继续？')) {
+      records.value = []
+    }
+  } else {
+    records.value.splice(index, 1)
+  }
 }
 
 const editRecord = (record) => {
-  editingRecord.value = record
+  editingRecord.value = { ...record }
   currentSubmenu.value = record.type
   showDialog.value = true
 }

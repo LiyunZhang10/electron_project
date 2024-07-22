@@ -1,3 +1,4 @@
+<!-- DialogBox.vue -->
 <template>
   <Transition name="dialog">
     <div class="dialog-overlay" @click.self="$emit('close')">
@@ -21,7 +22,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted } from 'vue'
+import { reactive, onMounted, watch } from 'vue'
 
 const props = defineProps({
   submenu: String,
@@ -33,6 +34,12 @@ const emit = defineEmits(['close', 'submit'])
 
 const info = reactive({})
 
+const resetInfo = () => {
+  Object.keys(info).forEach(key => {
+    info[key] = ''
+  })
+}
+
 onMounted(() => {
   if (props.editingRecord) {
     Object.keys(props.editingRecord).forEach(key => {
@@ -40,15 +47,27 @@ onMounted(() => {
         info[key] = props.editingRecord[key]
       }
     })
+  } else {
+    resetInfo()
+  }
+})
+
+watch(() => props.editingRecord, (newVal) => {
+  if (newVal) {
+    Object.keys(newVal).forEach(key => {
+      if (key !== 'id' && key !== 'type') {
+        info[key] = newVal[key]
+      }
+    })
+  } else {
+    resetInfo()
   }
 })
 
 const submit = () => {
   if (Object.values(info).some(value => value.trim() !== '')) {
-    emit('submit', { ...info, id: props.editingRecord?.id })
-    Object.keys(info).forEach(key => {
-      info[key] = ''
-    })
+    emit('submit', { ...info })
+    resetInfo()
   }
 }
 </script>

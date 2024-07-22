@@ -1,3 +1,4 @@
+<!-- Sidebar.vue -->
 <template>
   <div class="sidebar">
     <div class="menu-item">
