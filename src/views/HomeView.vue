@@ -1,18 +1,20 @@
 <template>
-  <div class="app">
-    <Sidebar @add-record="addRecord" />
-    <MainWindow :records="records" @delete-record="deleteRecord" />
+  <div class="app-container">
+    <Sidebar @add-record="openDialog" />
+    <MainWindow :records="records" @delete-record="deleteRecord" @edit-record="editRecord" />
     <DialogBox
       v-if="showDialog"
       :submenu="currentSubmenu"
+      :fields="dialogFields"
+      :editingRecord="editingRecord"
       @close="closeDialog"
-      @submit="submitDialog"
+      @submit="submitRecord"
     />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Sidebar from '@/components/Sidebar.vue'
 import MainWindow from '@/components/MainWindow.vue'
 import DialogBox from '@/components/DialogBox.vue'
@@ -20,61 +22,65 @@ import DialogBox from '@/components/DialogBox.vue'
 const records = ref([])
 const showDialog = ref(false)
 const currentSubmenu = ref('')
+const editingRecord = ref(null)
 
-const addRecord = (submenu) => {
-  currentSubmenu.value = submenu
+const dialogFields = computed(() => {
+  if (currentSubmenu.value === '打开网页') {
+    return [
+      { name: 'browserType', label: '浏览器类型', placeholder: '输入浏览器类型' },
+      { name: 'url', label: '网址', placeholder: '输入网址' },
+      { name: 'savePageObject', label: '保存页面对象', placeholder: '输入保存的页面对象名称' }
+    ]
+  } else if (currentSubmenu.value === '点击元素(web)') {
+    return [
+      { name: 'pageObject', label: '页面对象', placeholder: '输入页面对象' },
+      { name: 'operationTarget', label: '操作目标', placeholder: '输入操作目标' }
+    ]
+  }
+  return []
+})
+
+const openDialog = (type) => {
+  currentSubmenu.value = type
+  editingRecord.value = null
   showDialog.value = true
 }
 
 const closeDialog = () => {
   showDialog.value = false
+  editingRecord.value = null
 }
 
-const submitDialog = (info) => {
-  records.value.push({
-    id: Date.now() + Math.random(),
-    type: currentSubmenu.value,
-    ...info,
-    date: new Date().toLocaleString()
-  })
-  showDialog.value = false
+const submitRecord = (info) => {
+  if (editingRecord.value) {
+    const index = records.value.findIndex(record => record.id === editingRecord.value.id)
+    if (index !== -1) {
+      records.value[index] = { ...records.value[index], ...info }
+    }
+  } else {
+    records.value.push({
+      id: Date.now(),
+      type: currentSubmenu.value,
+      ...info
+    })
+  }
+  closeDialog()
 }
 
 const deleteRecord = (id) => {
   records.value = records.value.filter(record => record.id !== id)
 }
+
+const editRecord = (record) => {
+  editingRecord.value = record
+  currentSubmenu.value = record.type
+  showDialog.value = true
+}
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
-
-body {
-  margin: 0;
-  font-family: 'Roboto', sans-serif;
-  background-color: #f5f5f5;
-  overflow: hidden;
-}
-
-.app {
+<style scoped>
+.app-container {
   display: flex;
   height: 100vh;
-  max-height: 100vh;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #555;
 }
 </style>

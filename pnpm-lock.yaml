@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      electron:
+        specifier: ^31.2.1
+        version: 31.2.1
       vue:
         specifier: ^3.4.29
         version: 3.4.32
@@ -21,9 +24,6 @@ importers:
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
-      electron:
-        specifier: ^31.2.1
-        version: 31.2.1
       vite:
         specifier: ^5.3.1
         version: 5.3.4(@types/node@20.14.11)

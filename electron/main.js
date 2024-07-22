@@ -18,13 +18,10 @@ const createWindow = () => {
     height: 600,
     // 窗口图标。 在 Windows 上推荐使用 ICO 图标来获得最佳的视觉效果, 默认使用可执行文件的图标.
     // 在根目录中新建 build 文件夹存放图标等文件
-    icon: path.resolve("build/robot.ico")
+    icon: path.resolve("builder/robot.ico")
   })
   
-  // 开发环境下，打开开发者工具。
-  // if (!isPackaged) {
-  //   mainWindow.webContents.openDevTools();
-  // }
+  mainWindow.webContents.openDevTools();
   
   // 使用 loadFile 加载 electron/index.html 文件
 //   mainWindow.loadFile("electron/index.html");

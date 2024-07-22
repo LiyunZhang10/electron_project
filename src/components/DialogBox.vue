@@ -2,13 +2,13 @@
   <Transition name="dialog">
     <div class="dialog-overlay" @click.self="$emit('close')">
       <div class="dialog-box">
-        <h3>{{ submenu }} - 输入信息</h3>
-        <div v-for="field in fields" :key="field.key" class="info-input">
-          <label :for="field.key">{{ field.label }}:</label>
-          <input 
-            :id="field.key" 
-            v-model="info[field.key]" 
-            :placeholder="`请输入${field.label}`"
+        <h3>{{ submenu }}</h3>
+        <div v-for="field in fields" :key="field.name" class="info-input">
+          <label :for="field.name">{{ field.label }}:</label>
+          <input
+            :id="field.name"
+            v-model="info[field.name]"
+            :placeholder="field.placeholder"
           />
         </div>
         <div class="dialog-buttons">
@@ -21,30 +21,34 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 
 const props = defineProps({
-  submenu: String
+  submenu: String,
+  fields: Array,
+  editingRecord: Object
 })
 
 const emit = defineEmits(['close', 'submit'])
 
-const fields = [
-  { key: 'title', label: '标题' },
-  { key: 'description', label: '描述' },
-  { key: 'category', label: '类别' },
-]
+const info = reactive({})
 
-const info = reactive({
-  title: '',
-  description: '',
-  category: '',
+onMounted(() => {
+  if (props.editingRecord) {
+    Object.keys(props.editingRecord).forEach(key => {
+      if (key !== 'id' && key !== 'type') {
+        info[key] = props.editingRecord[key]
+      }
+    })
+  }
 })
 
 const submit = () => {
   if (Object.values(info).some(value => value.trim() !== '')) {
-    emit('submit', { ...info })
-    Object.keys(info).forEach(key => info[key] = '')
+    emit('submit', { ...info, id: props.editingRecord?.id })
+    Object.keys(info).forEach(key => {
+      info[key] = ''
+    })
   }
 }
 </script>
