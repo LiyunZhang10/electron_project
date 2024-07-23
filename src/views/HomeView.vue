@@ -29,7 +29,7 @@ import { ref, computed } from 'vue'
 import Sidebar from '@/components/Sidebar.vue'
 import MainWindow from '@/components/MainWindow.vue'
 import DialogBox from '@/components/DialogBox.vue'
-import axios from 'axios'
+import { openPage, clickElement, closeBrowser } from '@/services/apiService';
 
 const records = ref([])
 const showDialog = ref(false)
@@ -129,7 +129,7 @@ const runAutomation = async () => {
     if (firstRecord.type !== '打开网页') {
       throw new Error('第一条记录必须是打开网页')
     }
-    await axios.post('http://127.0.0.1:5000/open', { url: firstRecord.url })
+    await openPage(firstRecord.url)
 
     // 执行后续操作
     for (let i = 1; i < records.value.length; i++) {
@@ -137,14 +137,14 @@ const runAutomation = async () => {
       await new Promise(resolve => setTimeout(resolve, 10000))
       const record = records.value[i]
       if (record.type === '点击元素(web)') {
-        await axios.post('http://127.0.0.1:5000/click', { selector: record.operationTarget })
+        await clickElement(record.operationTarget)
       }
       // wait 10s
       await new Promise(resolve => setTimeout(resolve, 10000))
     }
 
     // 关闭浏览器
-    await axios.post('http://127.0.0.1:5000/close')
+    await closeBrowser()
 
     alert('自动化执行完成')
   } catch (error) {
