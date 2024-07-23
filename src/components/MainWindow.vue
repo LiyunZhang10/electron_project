@@ -1,6 +1,7 @@
 <!-- MainWindow.vue -->
 <template>
   <div class="main-window">
+    <button @click="$emit('run-automation')" class="run-btn">运行</button>
     <TransitionGroup name="list" tag="div" class="record-list">
       <div v-for="record in records" :key="record.id" class="record">
         <h3>{{ record.type }}</h3>
@@ -13,8 +14,10 @@
           在网页对象 <span class="highlight">{{ record.pageObject }}</span> 中，
           点击元素 <span class="highlight">{{ record.operationTarget }}</span>
         </p>
-        <button @click="$emit('edit-record', record)" class="edit-btn">编辑</button>
-        <button @click="$emit('delete-record', record.id)" class="delete-btn">删除</button>
+        <div class="button-group">
+          <button @click="$emit('edit-record', record)" class="edit-btn">编辑</button>
+          <button @click="$emit('delete-record', record.id)" class="delete-btn">删除</button>
+        </div>
       </div>
     </TransitionGroup>
     <div v-if="records.length === 0" class="empty-message">
@@ -30,7 +33,7 @@ defineProps({
   records: Array
 })
 
-defineEmits(['delete-record', 'edit-record'])
+defineEmits(['delete-record', 'edit-record', 'run-automation'])
 </script>
 
 <style scoped>
@@ -38,79 +41,100 @@ defineEmits(['delete-record', 'edit-record'])
   flex-grow: 1;
   padding: 20px;
   overflow-y: auto;
-  background-color: #f9f9f9;
+  background-color: #f0f2f5;
   height: 100%;
   margin-left: 10px;
   box-sizing: border-box;
+}
+
+.run-btn {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-bottom: 20px;
+}
+
+.run-btn:hover {
+  background-color: #45a049;
 }
 
 .record-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 10px;
 }
 
 .record {
   padding: 20px;
   background-color: #ffffff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
 .record:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 .record h3 {
   margin-top: 0;
-  color: #2980b9;
+  color: #1a73e8;
   font-weight: 500;
 }
 
 .record p {
-  color: #34495e;
+  color: #202124;
   margin: 10px 0;
   line-height: 1.6;
 }
 
 .highlight {
-  color: #e74c3c;
-  font-family: 'Courier New', monospace;
+  color: #d93025;
+  font-family: 'Roboto Mono', monospace;
   font-size: 1.1em;
-  font-style: italic;
+  font-weight: 500;
 }
 
-.delete-btn {
-  background-color: #e74c3c;
-  color: white;
+.button-group {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.edit-btn, .delete-btn {
   border: none;
   padding: 8px 15px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 15px;
-}
-
-.delete-btn:hover {
-  background-color: #c0392b;
+  transition: background-color 0.3s, transform 0.2s;
+  font-weight: 500;
+  margin-left: 10px;
 }
 
 .edit-btn {
-  background-color: #3498db;
+  background-color: #1a73e8;
   color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 15px;
-  margin-right: 10px;
 }
+
 .edit-btn:hover {
-  background-color: #2980b9;
+  background-color: #1967d2;
+  transform: translateY(-2px);
+}
+
+.delete-btn {
+  background-color: #ea4335;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #d93025;
+  transform: translateY(-2px);
 }
 
 .list-enter-active,
@@ -126,8 +150,9 @@ defineEmits(['delete-record', 'edit-record'])
 
 .empty-message {
   text-align: center;
-  color: #7f8c8d;
-  margin-top: 20px;
+  color: #5f6368;
+  margin-top: 50px;
   font-size: 1.2em;
+  font-style: italic;
 }
 </style>

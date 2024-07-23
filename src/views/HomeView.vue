@@ -1,7 +1,12 @@
 <template>
   <div class="app-container">
     <Sidebar @add-record="openDialog" />
-    <MainWindow :records="records" @delete-record="deleteRecord" @edit-record="editRecord" />
+    <MainWindow 
+      :records="records" 
+      @delete-record="deleteRecord" 
+      @edit-record="editRecord"
+      @run-automation="runAutomation"
+    />
     <DialogBox
       v-if="showDialog"
       :submenu="currentSubmenu"
@@ -24,6 +29,7 @@ import { ref, computed } from 'vue'
 import Sidebar from '@/components/Sidebar.vue'
 import MainWindow from '@/components/MainWindow.vue'
 import DialogBox from '@/components/DialogBox.vue'
+import axios from 'axios'
 
 const records = ref([])
 const showDialog = ref(false)
@@ -108,6 +114,43 @@ const editRecord = (record) => {
 const closeWarning = () => {
   showWarning.value = false
   warningMessage.value = ''
+}
+
+const runAutomation = async () => {
+  if (records.value.length === 0) {
+    showWarning.value = true
+    warningMessage.value = '没有可执行的记录。'
+    return
+  }
+
+  try {
+    // 打开浏览器
+    const firstRecord = records.value[0]
+    if (firstRecord.type !== '打开网页') {
+      throw new Error('第一条记录必须是打开网页')
+    }
+    await axios.post('http://127.0.0.1:5000/open', { url: firstRecord.url })
+
+    // 执行后续操作
+    for (let i = 1; i < records.value.length; i++) {
+      // wait 10s
+      await new Promise(resolve => setTimeout(resolve, 10000))
+      const record = records.value[i]
+      if (record.type === '点击元素(web)') {
+        await axios.post('http://127.0.0.1:5000/click', { selector: record.operationTarget })
+      }
+      // wait 10s
+      await new Promise(resolve => setTimeout(resolve, 10000))
+    }
+
+    // 关闭浏览器
+    await axios.post('http://127.0.0.1:5000/close')
+
+    alert('自动化执行完成')
+  } catch (error) {
+    console.error('自动化执行失败:', error)
+    alert('自动化执行失败: ' + error.message)
+  }
 }
 </script>
 
