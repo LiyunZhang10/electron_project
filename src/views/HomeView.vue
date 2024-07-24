@@ -1,11 +1,14 @@
+<!-- App.vue -->
 <template>
   <div class="app-container">
     <Sidebar @add-record="openDialog" />
     <MainWindow 
       :records="records" 
+      :isRunning="isRunning"
       @delete-record="deleteRecord" 
       @edit-record="editRecord"
       @run-automation="runAutomation"
+      @stop-automation="stopAutomation"
     />
     <DialogBox
       v-if="showDialog"
@@ -37,6 +40,8 @@ const currentSubmenu = ref('')
 const editingRecord = ref(null)
 const showWarning = ref(false)
 const warningMessage = ref('')
+const isRunning = ref(false)
+let stopRequested = false
 
 const dialogFields = computed(() => {
   if (currentSubmenu.value === '打开网页') {
@@ -123,7 +128,14 @@ const runAutomation = async () => {
     return
   }
 
+  if (isRunning.value) {
+    alert('自动化任务已在运行中')
+    return
+  }
+
   try {
+    isRunning.value = true
+    stopRequested = false
     // 打开浏览器
     const firstRecord = records.value[0]
     if (firstRecord.type !== '打开网页') {
@@ -133,25 +145,34 @@ const runAutomation = async () => {
 
     // 执行后续操作
     for (let i = 1; i < records.value.length; i++) {
-      // wait 10s
+      if (stopRequested) break; // 如果收到停止请求，就退出循环
       await new Promise(resolve => setTimeout(resolve, 10000))
       const record = records.value[i]
       if (record.type === '点击元素(web)') {
         await clickElement(record.operationTarget)
       }
-      // wait 10s
-      await new Promise(resolve => setTimeout(resolve, 10000))
     }
 
-    // 关闭浏览器
-    await closeBrowser()
-
-    alert('自动化执行完成')
+    if (!stopRequested) {
+      alert('自动化任务已执行完毕，浏览器保持打开状态')
+    }
   } catch (error) {
     console.error('自动化执行失败:', error)
     alert('自动化执行失败: ' + error.message)
   }
 }
+
+const stopAutomation = async () => {
+  if (isRunning.value) {
+    stopRequested = true
+    await closeBrowser()
+    isRunning.value = false
+    alert('自动化已停止，浏览器已关闭')
+  } else {
+    alert('没有正在运行的自动化任务')
+  }
+}
+
 </script>
 
 <style scoped>
@@ -189,5 +210,4 @@ const runAutomation = async () => {
   border-radius: 3px;
   cursor: pointer;
 }
-
 </style>

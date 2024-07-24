@@ -1,7 +1,10 @@
 <!-- MainWindow.vue -->
 <template>
   <div class="main-window">
-    <button @click="$emit('run-automation')" class="run-btn">运行</button>
+    <div class="button-container">
+      <button @click="$emit('run-automation')" :disabled="isRunning" class="run-btn">运行</button>
+      <button @click="$emit('stop-automation')" :disabled="!isRunning" class="stop-btn">停止</button>
+    </div>
     <TransitionGroup name="list" tag="div" class="record-list">
       <div v-for="record in records" :key="record.id" class="record">
         <h3>{{ record.type }}</h3>
@@ -30,10 +33,11 @@
 import { defineProps, defineEmits } from 'vue'
 
 defineProps({
-  records: Array
+  records: Array,
+  isRunning: Boolean
 })
 
-defineEmits(['delete-record', 'edit-record', 'run-automation'])
+defineEmits(['delete-record', 'edit-record', 'run-automation', 'stop-automation'])
 </script>
 
 <style scoped>
@@ -47,8 +51,13 @@ defineEmits(['delete-record', 'edit-record', 'run-automation'])
   box-sizing: border-box;
 }
 
-.run-btn {
-  background-color: #4CAF50;
+.button-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.run-btn, .stop-btn {
   color: white;
   border: none;
   padding: 10px 20px;
@@ -56,11 +65,27 @@ defineEmits(['delete-record', 'edit-record', 'run-automation'])
   font-size: 16px;
   cursor: pointer;
   transition: background-color 0.3s;
-  margin-bottom: 20px;
 }
 
-.run-btn:hover {
+.run-btn {
+  background-color: #4CAF50;
+}
+
+.run-btn:hover:not(:disabled) {
   background-color: #45a049;
+}
+
+.stop-btn {
+  background-color: #ea4335;
+}
+
+.stop-btn:hover:not(:disabled) {
+  background-color: #d93025;
+}
+
+.run-btn:disabled, .stop-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
 }
 
 .record-list {
