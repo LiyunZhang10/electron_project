@@ -5,6 +5,7 @@
     <MainWindow 
       :records="records" 
       :isRunning="isRunning"
+      :isBrowserOpen="isBrowserOpen"
       @delete-record="deleteRecord" 
       @edit-record="editRecord"
       @run-automation="runAutomation"
@@ -18,17 +19,25 @@
       @close="closeDialog"
       @submit="submitRecord"
     />
-    <div v-if="showWarning" class="warning-overlay">
-      <div class="warning-box">
-        <p>{{ warningMessage }}</p>
-        <button @click="closeWarning">确定</button>
-      </div>
-    </div>
+    <el-dialog
+      v-model="showWarning"
+      title="警告"
+      width="30%"
+      center
+    >
+      <span>{{ warningMessage }}</span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="closeWarning">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import Sidebar from '@/components/Sidebar.vue'
 import MainWindow from '@/components/MainWindow.vue'
 import DialogBox from '@/components/DialogBox.vue'
@@ -41,6 +50,7 @@ const editingRecord = ref(null)
 const showWarning = ref(false)
 const warningMessage = ref('')
 const isRunning = ref(false)
+const isBrowserOpen = ref(false)
 let stopRequested = false
 
 const dialogFields = computed(() => {
@@ -129,12 +139,13 @@ const runAutomation = async () => {
   }
 
   if (isRunning.value) {
-    alert('自动化任务已在运行中')
+    ElMessage.warning('自动化任务已在运行中')
     return
   }
 
   try {
     isRunning.value = true
+    isBrowserOpen.value = true
     stopRequested = false
     // 打开浏览器
     const firstRecord = records.value[0]
@@ -154,22 +165,30 @@ const runAutomation = async () => {
     }
 
     if (!stopRequested) {
-      alert('自动化任务已执行完毕，浏览器保持打开状态')
+      ElMessageBox.alert('自动化任务已执行完毕，浏览器保持打开状态。如需关闭浏览器，请点击停止按钮。', '执行完成', {
+        confirmButtonText: '确定'
+      })
     }
   } catch (error) {
     console.error('自动化执行失败:', error)
-    alert('自动化执行失败: ' + error.message)
+    ElMessageBox.alert(error.message, '自动化执行失败', {
+      confirmButtonText: '确定',
+      type: 'error'
+    })
+  } finally {
+    isRunning.value = false
   }
 }
 
 const stopAutomation = async () => {
-  if (isRunning.value) {
+  if (isBrowserOpen.value) {
     stopRequested = true
     await closeBrowser()
+    isBrowserOpen.value = false
     isRunning.value = false
-    alert('自动化已停止，浏览器已关闭')
+    ElMessage.success('浏览器已关闭')
   } else {
-    alert('没有正在运行的自动化任务')
+    ElMessage.info('没有打开的浏览器')
   }
 }
 
@@ -179,35 +198,5 @@ const stopAutomation = async () => {
 .app-container {
   display: flex;
   height: 100vh;
-}
-
-.warning-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.warning-box {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  text-align: center;
-}
-
-.warning-box button {
-  margin-top: 10px;
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
 }
 </style>
