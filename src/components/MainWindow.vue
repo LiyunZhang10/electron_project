@@ -2,7 +2,7 @@
 <template>
   <div class="main-window">
     <div class="button-container">
-      <el-button type="success" @click="$emit('run-automation')" :disabled="isRunning">运行</el-button>
+      <el-button type="success" @click="$emit('run-automation')" :disabled="isRunning || isBrowserOpen">运行</el-button>
       <el-button type="danger" @click="$emit('stop-automation')" :disabled="!isBrowserOpen">停止</el-button>
     </div>
     <el-empty v-if="records.length === 0" description="点击左侧指令区添加指令" />

@@ -36,12 +36,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Sidebar from '@/components/Sidebar.vue'
 import MainWindow from '@/components/MainWindow.vue'
 import DialogBox from '@/components/DialogBox.vue'
-import { openPage, clickElement, closeBrowser } from '@/services/apiService';
+import { openPage, clickElement, closeBrowser } from '@/services/apiService'
 
 const records = ref([])
 const showDialog = ref(false)
@@ -52,6 +52,7 @@ const warningMessage = ref('')
 const isRunning = ref(false)
 const isBrowserOpen = ref(false)
 let stopRequested = false
+let browserCheckInterval = null
 
 const dialogFields = computed(() => {
   if (currentSubmenu.value === '打开网页') {
@@ -138,8 +139,8 @@ const runAutomation = async () => {
     return
   }
 
-  if (isRunning.value) {
-    ElMessage.warning('自动化任务已在运行中')
+  if (isRunning.value || isBrowserOpen.value) {
+    ElMessage.warning('自动化任务已在运行中或浏览器仍然打开')
     return
   }
 
@@ -147,6 +148,8 @@ const runAutomation = async () => {
     isRunning.value = true
     isBrowserOpen.value = true
     stopRequested = false
+    startBrowserCheck()
+
     // 打开浏览器
     const firstRecord = records.value[0]
     if (firstRecord.type !== '打开网页') {
@@ -156,8 +159,8 @@ const runAutomation = async () => {
 
     // 执行后续操作
     for (let i = 1; i < records.value.length; i++) {
-      if (stopRequested) break; // 如果收到停止请求，就退出循环
-      await new Promise(resolve => setTimeout(resolve, 10000))
+      if (stopRequested) break
+      await new Promise(resolve => setTimeout(resolve, 1000))
       const record = records.value[i]
       if (record.type === '点击元素(web)') {
         await clickElement(record.operationTarget)
@@ -165,32 +168,76 @@ const runAutomation = async () => {
     }
 
     if (!stopRequested) {
-      ElMessageBox.alert('自动化任务已执行完毕，浏览器保持打开状态。如需关闭浏览器，请点击停止按钮。', '执行完成', {
+      await ElMessageBox.alert('自动化任务已执行完毕，浏览器保持打开状态。如需关闭浏览器，请点击停止按钮。', '执行完成', {
         confirmButtonText: '确定'
       })
     }
   } catch (error) {
     console.error('自动化执行失败:', error)
-    ElMessageBox.alert(error.message, '自动化执行失败', {
+    await ElMessageBox.alert(error.message, '自动化执行失败', {
       confirmButtonText: '确定',
       type: 'error'
     })
   } finally {
     isRunning.value = false
+    // 注意：这里我们不设置 isBrowserOpen 为 false，因为浏览器仍然是打开的
   }
 }
 
 const stopAutomation = async () => {
   if (isBrowserOpen.value) {
     stopRequested = true
-    await closeBrowser()
-    isBrowserOpen.value = false
     isRunning.value = false
-    ElMessage.success('浏览器已关闭')
+    ElMessage.info('正在关闭浏览器，请稍候...')
+    
+    try {
+      await Promise.race([
+        closeBrowser(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('关闭浏览器超时')), 10000))
+      ])
+      isBrowserOpen.value = false
+      ElMessage.success('浏览器已关闭')
+    } catch (error) {
+      console.error('关闭浏览器失败:', error)
+      ElMessage.error('关闭浏览器失败，请手动关闭浏览器')
+    } finally {
+      stopBrowserCheck()
+    }
   } else {
     ElMessage.info('没有打开的浏览器')
   }
 }
+
+const startBrowserCheck = () => {
+  if (browserCheckInterval) {
+    clearInterval(browserCheckInterval)
+  }
+  browserCheckInterval = setInterval(checkBrowserOpen, 5000) // 每5秒检查一次
+}
+
+const stopBrowserCheck = () => {
+  if (browserCheckInterval) {
+    clearInterval(browserCheckInterval)
+    browserCheckInterval = null
+  }
+}
+
+const checkBrowserOpen = () => {
+  // 这里我们只在isRunning为false时检查，因为运行中的任务我们认为浏览器一定是打开的
+  if (!isRunning.value && isBrowserOpen.value) {
+    // 这里可以添加额外的检查逻辑，比如通过轻量级的API调用来确认浏览器状态
+    // 现在我们只是假设浏览器仍然是打开的
+    console.log('浏览器仍然打开')
+  }
+}
+
+onMounted(() => {
+  startBrowserCheck()
+})
+
+onUnmounted(() => {
+  stopBrowserCheck()
+})
 
 </script>
 
