@@ -3,6 +3,8 @@
   <div class="main-window">
     <div class="button-container">
       <el-button type="success" @click="$emit('run-automation')" :disabled="isRunning || isBrowserOpen">运行</el-button>
+      <el-button type="warning" @click="$emit('pause-automation')" :disabled="!isRunning || isPaused">暂停</el-button>
+      <el-button type="info" @click="$emit('resume-automation')" :disabled="!isPaused">继续</el-button>
       <el-button type="danger" @click="$emit('stop-automation')" :disabled="!isBrowserOpen">停止</el-button>
     </div>
     <el-empty v-if="records.length === 0" description="点击左侧指令区添加指令" />
@@ -38,10 +40,11 @@
 defineProps({
   records: Array,
   isRunning: Boolean,
-  isBrowserOpen: Boolean
+  isBrowserOpen: Boolean,
+  isPaused: Boolean
 })
 
-defineEmits(['delete-record', 'edit-record', 'run-automation', 'stop-automation'])
+defineEmits(['delete-record', 'edit-record', 'run-automation', 'stop-automation', 'pause-automation', 'resume-automation'])
 </script>
 
 <style scoped>

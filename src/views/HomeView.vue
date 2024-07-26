@@ -6,10 +6,13 @@
       :records="records" 
       :isRunning="isRunning"
       :isBrowserOpen="isBrowserOpen"
+      :isPaused="isPaused"
       @delete-record="deleteRecord" 
       @edit-record="editRecord"
       @run-automation="runAutomation"
       @stop-automation="stopAutomation"
+      @pause-automation="pauseAutomation"
+      @resume-automation="resumeAutomation"
     />
     <DialogBox
       v-if="showDialog"
@@ -51,8 +54,11 @@ const showWarning = ref(false)
 const warningMessage = ref('')
 const isRunning = ref(false)
 const isBrowserOpen = ref(false)
+const isPaused = ref(false)
 let stopRequested = false
+let pauseRequested = false
 let browserCheckInterval = null
+let currentRecordIndex = 0
 
 const dialogFields = computed(() => {
   if (currentSubmenu.value === '打开网页') {
@@ -148,6 +154,8 @@ const runAutomation = async () => {
     isRunning.value = true
     isBrowserOpen.value = true
     stopRequested = false
+    pauseRequested = false
+    isPaused.value = false
     startBrowserCheck()
 
     // 打开浏览器
@@ -158,13 +166,19 @@ const runAutomation = async () => {
     await openPage(firstRecord.url)
 
     // 执行后续操作
-    for (let i = 1; i < records.value.length; i++) {
+    for (currentRecordIndex = 1; currentRecordIndex < records.value.length; currentRecordIndex++) {
+      if (stopRequested) break
+      while (pauseRequested) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+        if (stopRequested) break // 在暂停时也检查是否请求停止
+      }
       if (stopRequested) break
       await new Promise(resolve => setTimeout(resolve, 1000))
-      const record = records.value[i]
+      const record = records.value[currentRecordIndex]
       if (record.type === '点击元素(web)') {
         await clickElement(record.operationTarget)
       }
+      await new Promise(resolve => setTimeout(resolve, 10000))
     }
 
     if (!stopRequested) {
@@ -180,13 +194,15 @@ const runAutomation = async () => {
     })
   } finally {
     isRunning.value = false
-    // 注意：这里我们不设置 isBrowserOpen 为 false，因为浏览器仍然是打开的
+    isPaused.value = false
   }
 }
 
 const stopAutomation = async () => {
   if (isBrowserOpen.value) {
     stopRequested = true
+    pauseRequested = false
+    isPaused.value = false
     isRunning.value = false
     ElMessage.info('正在关闭浏览器，请稍候...')
     
@@ -205,6 +221,22 @@ const stopAutomation = async () => {
     }
   } else {
     ElMessage.info('没有打开的浏览器')
+  }
+}
+
+const pauseAutomation = () => {
+  if (isRunning.value && !isPaused.value) {
+    pauseRequested = true
+    isPaused.value = true
+    ElMessage.info('自动化任务已暂停')
+  }
+}
+
+const resumeAutomation = () => {
+  if (isPaused.value) {
+    pauseRequested = false
+    isPaused.value = false
+    ElMessage.info('自动化任务已恢复')
   }
 }
 
