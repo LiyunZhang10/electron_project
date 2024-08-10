@@ -19,3 +19,11 @@ export const clickElement = (selector) => {
 export const closeBrowser = () => {
   return apiClient.post('/close');
 };
+
+export const openExcel = (filePath) => {
+  return apiClient.post('/open_excel', { filePath });
+};
+
+export const readExcel = (sheetName) => {
+  return apiClient.post('/read_excel', { sheetName });
+};
