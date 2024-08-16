@@ -37,6 +37,7 @@ const isBrowserOpen = ref(false)
 let stopRequested = false
 let browserCheckInterval = null
 let currentRecordIndex = 0
+const windowObject = ref(null)
 
 const dialogFields = computed(() => {
   switch (currentSubmenu.value) {
@@ -51,32 +52,35 @@ const dialogFields = computed(() => {
       ]
     case '获取窗口对象':
       return [
-        { name: 'getWindowMethod', label: '获取窗口方式', type: 'select', options: [{ label: '窗口标题或类型名', value: 'title' }], default: 'title' },
+        { name: 'getWindowMethod', label: '获取窗口方式', type: 'select', options: [{ label: '窗口标题或类型名', value: 'by_title' }, { label: '通过元素查找', value: 'by_element' }], default: 'by_title' },
         { name: 'windowTitle', label: '窗口标题', placeholder: '输入窗口标题', rules: [{ validator: validateLength, max: 256, trigger: 'blur' }] },
         { name: 'addWindowType', label: '添加窗口类型', type: 'checkbox' },
         { name: 'windowType', label: '窗口类型', placeholder: '输入窗口类型', show: 'addWindowType' },
         { name: 'useWildcard', label: '使用通配符匹配', type: 'checkbox' },
         { name: 'saveWindowObject', label: '保存窗口对象', placeholder: '输入保存的窗口对象名称', default: 'wind_title' }
-      ]
+      ];
     case '点击元素(win)':
       return [
-        { name: 'windowObject', label: '窗口标题', type: 'select', options: getWindowObjects },
-        { name: 'operationTarget', label: '操作元素', type: 'file', accept: 'image/*' }
-      ]
+        { name: 'windowObject', label: '窗口对象', type: 'select', options: [{ label: windowObject.value, value: windowObject.value}] },
+        { name: 'operationTarget', label: '操作元素', type: 'file', accept: 'image/' }
+      ];
     case '打开/新建Excel':
       return [
         { name: 'openMethod', label: '启动方式', type: 'select', options: [{ label: '打开Excel', value: 'open' }, { label: '新建Excel', value: 'new' }], default: 'open' },
-        { name: 'excelFilePath', label: 'Excel文件路径', type: 'file', accept: '.xlsx,.xls' },
+        { name: 'excelFilePath', label: 'Excel文件路径', accept: '.xlsx,.xls' },
         { name: 'driverType', label: '驱动方式', type: 'select', options: [{ label: 'Office', value: 'office' }, { label: 'WPS', value: 'wps' }, { label: 'OpenPyXL', value: 'openpyxl' }] }
       ]
     case '读取Excel':
       return [
-        { name: 'excelObject', label: 'Excel对象', type: 'select', options: getExcelObjects },
-        { name: 'readMethod', label: '读取方式', type: 'select', options: [{ label: '单元格内容', value: 'cell' }, { label: '行内容', value: 'row' }, { label: '列内容', value: 'column' }, { label: '区域内容', value: 'range' }, { label: '已使用区域内容', value: 'used_range' }], default: 'cell' },
+        { name: 'readMethod', label: '读取方式', type: 'select', options: [{ label: '单元格内容', value: 'cell_content' }, { label: '行内容', value: 'row_content' }, { label: '列内容', value: 'col_content' }, { label: '区域内容', value: 'area_content' }, { label: '已使用区域内容', value: 'used_area_content' }], default: 'cell' },
+        { name: 'cellAddress', label: '单元格地址', placeholder: '输入单元格地址', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
         { name: 'rowNumber', label: '行号', placeholder: '输入行号', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
-        { name: 'columnName', label: '列名', placeholder: '输入列名', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'colNumber', label: '列名', placeholder: '输入列名', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'firstRowNumber', label: '首元素行号', placeholder: '输入行号', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'firstColNumber', label: '首元素列名', placeholder: '输入列名', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'lastRowNumber', label: '末元素行号', placeholder: '输入行号', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'lastColNumber', label: '末元素列名', placeholder: '输入列名', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
         { name: 'sheetName', label: 'Sheet名', placeholder: '输入Sheet名', rules: [{ validator: validateLength, max: 64, trigger: 'blur' }] },
-        { name: 'saveExcelData', label: 'Excel读取数据', placeholder: '输入保存的数据名称', default: 'excel_data' }
       ]
     default:
       return []
@@ -183,11 +187,16 @@ const runAutomation = async () => {
             await clickElement(record.operationTarget)
             break
           case '获取窗口对象':
-            await getWindow(record)
-            break
+            windowObject.value = await getWindow(record);
+            console.log("windowObject", windowObject.value)
+            break;
           case '点击元素(win)':
-            await clickElementWin(record.windowObject, record.operationTarget)
-            break
+            const formData = new FormData();
+            formData.append('window_title', record.windowObject);
+            formData.append('loc', record.operationTarget);
+            console.log("formData", formData)
+            await clickElementWin(formData);
+            break;
           case '打开/新建Excel':
             await openExcel(record)
             break
@@ -195,6 +204,7 @@ const runAutomation = async () => {
             await readExcel(record)
             break
         }
+        await new Promise(resolve => setTimeout(resolve, 5000))
       } catch (error) {
         ElMessage.error(`执行操作 "${record.type}" 时出错: ${error.message}`)
         throw error // 重新抛出错误以停止自动化过程

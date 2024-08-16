@@ -1,19 +1,21 @@
 import axios from 'axios';
+import { reactive } from 'vue';
 
-const API_BASE_URL = 'http://127.0.0.1:5000';
-
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-export const openPage = async (url) => {
+export const openPage = async (urls) => {
+  const url = reactive({
+    url: ""
+  })
+  url.url = urls
   try {
-    const response = await api.post('/open', { url });
-    return response.data;
+    const response = await axios({
+      method: 'post',
+      url: '/api/web_auto/open_web',
+      data: url,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    console.log(response)
   } catch (error) {
     console.error('Error opening page:', error);
     throw error;
@@ -21,8 +23,19 @@ export const openPage = async (url) => {
 };
 
 export const clickElement = async (operationTarget) => {
+  const target = reactive({
+    loc: ""
+  })
+  target.loc = operationTarget
   try {
-    const response = await api.post('/web/click_element', { operationTarget });
+    const response = await axios({
+      method: 'post',
+      url: '/api/web_auto/click_element',
+      data: target,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
     return response.data;
   } catch (error) {
     console.error('Error clicking element:', error);
@@ -31,8 +44,24 @@ export const clickElement = async (operationTarget) => {
 };
 
 export const getWindow = async (params) => {
+  console.log(params)
+  const target = reactive({
+    method: "",
+    loc: ""
+  })
+  target.method = params.getWindowMethod;
+  target.loc = params.windowTitle
+  console.log(target)
   try {
-    const response = await api.post('/get_wind', params);
+    const response = await axios({
+      method: 'post',
+      url: '/api/desk_auto/get_window',
+      data: target,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    console.log("response", response)
     return response.data;
   } catch (error) {
     console.error('Error getting window:', error);
@@ -40,15 +69,26 @@ export const getWindow = async (params) => {
   }
 };
 
-export const clickElementWin = async (windowObject, operationTarget) => {
+export const clickElementWin = async (params) => {
+  const target = reactive({
+    windowTitle: "",
+    loc: ""
+  })
+  target.windowTitle = params.windowTitle;
+  target.loc = params.loc;
   try {
-    const response = await api.post('/wind/click_element', {
-      windowObject,
-      operationTarget,
-    });
+    const response = await axios({
+      method: 'post',
+      url: '/api/desk_auto/click_element',
+      data: target,
+      headers: {
+        "multipart/form-data": "application/json"
+      }
+    })
+    console.log("response", response)
     return response.data;
   } catch (error) {
-    console.error('Error clicking element in window:', error);
+    console.error('Error clicking element:', error);
     throw error;
   }
 };
