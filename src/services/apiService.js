@@ -69,23 +69,17 @@ export const getWindow = async (params) => {
   }
 };
 
-export const clickElementWin = async (params) => {
-  const target = reactive({
-    windowTitle: "",
-    loc: ""
-  })
-  target.windowTitle = params.windowTitle;
-  target.loc = params.loc;
+export const clickElementWin = async (formData) => {
   try {
     const response = await axios({
       method: 'post',
       url: '/api/desk_auto/click_element',
-      data: target,
+      data: formData,
       headers: {
-        "multipart/form-data": "application/json"
-      }
-    })
-    console.log("response", response)
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    console.log('response', response);
     return response.data;
   } catch (error) {
     console.error('Error clicking element:', error);
@@ -94,8 +88,23 @@ export const clickElementWin = async (params) => {
 };
 
 export const openExcel = async (params) => {
+  const target = reactive({
+    method: '',
+    file_path: '',
+    driver_method: '',
+  });
+  target.method = params.openMethod;
+  target.file_path = params.excelFilePath;
+  target.driver_method = params.driverType;
   try {
-    const response = await api.post('/open_excel', params);
+    const response = await axios({
+      method: 'post',
+      url: '/api/excel_wps/open_excel',
+      data: target,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     return response.data;
   } catch (error) {
     console.error('Error opening Excel:', error);
@@ -104,8 +113,71 @@ export const openExcel = async (params) => {
 };
 
 export const readExcel = async (params) => {
+  console.log(params)
+  if (params.readMethod === 'cell_content') {
+    var target = reactive({
+      read_method: '',
+      sheet_name: '',
+      args: '',
+    });
+    target.read_method = params.readMethod;
+    target.sheet_name = params.sheetName;
+    target.args = {
+      [params.cellRowNumber]: params.cellColNumber,
+    };
+  } else if (params.readMethod === 'row_content') {
+    var target = reactive({
+      read_method: '',
+      sheet_name: '',
+      args: '',
+    });
+    target.read_method = params.readMethod;
+    target.sheet_name = params.sheetName;
+    target.args = {
+      'row': params.rowNumber,
+    };
+  } else if (params.readMethod === 'col_content') {
+    var target = reactive({
+      read_method: '',
+      sheet_name: '',
+      args: '',
+    });
+    target.read_method = params.readMethod;
+    target.sheet_name = params.sheetName;
+    target.args = {
+      'col': params.colNumber
+    }
+  } else if (params.readMethod === 'area_content') {
+    var target = reactive({
+      read_method: '',
+      sheet_name: '',
+      args: '',
+    });
+    target.read_method = params.readMethod;
+    target.sheet_name = params.sheetName;
+    target.args = {
+      [params.firstRowNumber]: params.firstColNumber,
+      [params.lastRowNumber]: params.lastColNumber,
+    };
+  } else if (params.readMethod === 'used_area_content') {
+    var target = reactive({
+      read_method: '',
+      sheet_name: '',
+    });
+    target.read_method = params.readMethod;
+    target.sheet_name = params.sheetName;
+  }
+  console.log(target)
   try {
-    const response = await api.post('/read_excel', params);
+    const response = await axios({
+      method: 'post',
+      url: '/api/excel_wps/read_excel',
+      data: target,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('response', response);
     return response.data;
   } catch (error) {
     console.error('Error reading Excel:', error);

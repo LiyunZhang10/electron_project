@@ -1,4 +1,3 @@
-<!-- DialogBox.vue -->
 <template>
   <el-dialog v-model="dialogVisible" :title="submenu" width="50%" @close="$emit('close')">
     <el-form :model="info" label-width="120px" :rules="formRules" ref="formRef">
@@ -10,10 +9,8 @@
             :value="option.value"></el-option>
         </el-select>
         <el-checkbox v-else-if="field.type === 'checkbox'" v-model="info[field.name]">{{ field.label }}</el-checkbox>
-        <el-upload v-else-if="field.type === 'file'" :action="uploadUrl" :on-success="handleFileUploadSuccess"
-          :on-error="handleFileUploadError" :accept="field.accept">
-          <el-button type="primary">上传文件</el-button>
-        </el-upload>
+        <input v-else-if="field.type === 'file'" type="file" :accept="field.accept"
+          @change="handleFileChange($event, field.name)">
       </el-form-item>
     </el-form>
     <template #footer>
@@ -69,6 +66,13 @@ watch(() => props.editingRecord, (newVal) => {
   }
 }, { immediate: true })
 
+const handleFileChange = (event, fieldName) => {
+  const file = event.target.files[0]
+  if (file) {
+    info[fieldName] = file
+  }
+}
+
 const submit = async () => {
   if (!formRef.value) return
 
@@ -82,16 +86,4 @@ const submit = async () => {
     ElMessage.error('请检查输入是否正确')
   }
 }
-
-const handleFileUploadSuccess = (response, file) => {
-  info[file.raw.name] = response.filePath
-}
-
-const handleFileUploadError = (error) => {
-  console.error('File upload failed:', error)
-  ElMessage.error('文件上传失败')
-}
-
-// 这里需要定义上传URL，你可能需要根据你的后端API来设置
-const uploadUrl = 'http://your-api-url/upload'
 </script>

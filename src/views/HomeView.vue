@@ -20,7 +20,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import Sidebar from '@/components/Sidebar.vue'
 import MainWindow from '@/components/MainWindow.vue'
 import DialogBox from '@/components/DialogBox.vue'
@@ -73,7 +73,8 @@ const dialogFields = computed(() => {
     case '读取Excel':
       return [
         { name: 'readMethod', label: '读取方式', type: 'select', options: [{ label: '单元格内容', value: 'cell_content' }, { label: '行内容', value: 'row_content' }, { label: '列内容', value: 'col_content' }, { label: '区域内容', value: 'area_content' }, { label: '已使用区域内容', value: 'used_area_content' }], default: 'cell' },
-        { name: 'cellAddress', label: '单元格地址', placeholder: '输入单元格地址', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'cellRowNumber', label: '单元格行号', placeholder: '输入单元格行号', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
+        { name: 'cellColNumber', label: '单元格列名', placeholder: '输入单元格列名', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
         { name: 'rowNumber', label: '行号', placeholder: '输入行号', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
         { name: 'colNumber', label: '列名', placeholder: '输入列名', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
         { name: 'firstRowNumber', label: '首元素行号', placeholder: '输入行号', rules: [{ validator: validateLength, max: 16, trigger: 'blur' }] },
